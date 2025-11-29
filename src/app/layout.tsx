@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     siteName: "MooveLabs",
     images: [
       {
-        url: "https://moovelabs.com/og-image.png",
+        url: "https://moovelabs.com/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "MooveLabs – Inovação em Apps, Automação e IA",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MooveLabs – Inovação em Apps, Automação e IA",
     description: "Desenvolvimento de apps, automação e IA 24/7.",
-    images: ["https://moovelabs.com/og-image.png"],
+    images: ["https://moovelabs.com/og-image.jpg"],
   },
 };
 
