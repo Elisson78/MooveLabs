@@ -54,5 +54,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3002/api || exit 1
 
 # Comando para iniciar
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
+# Atenção: assumimos que o banco já está migrado. Migrations devem ser aplicadas
+# manualmente (localmente ou via job separado) para evitar problemas de engine
+# do Prisma no ambiente de produção do EasyPanel.
+CMD ["node", "dist/main.js"]
 
