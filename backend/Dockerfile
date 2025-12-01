@@ -1,7 +1,16 @@
+###############################################
 # Build stage
-FROM node:20-alpine AS builder
+###############################################
+# Usamos imagem Debian (não Alpine) para evitar problemas
+# de compatibilidade do Prisma com libssl/glibc.
+FROM node:20 AS builder
 
 WORKDIR /app
+
+# Dependências de sistema necessárias para Prisma (OpenSSL, etc.)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copia package files
 COPY package*.json ./
@@ -19,10 +28,17 @@ COPY . .
 # Build
 RUN npm run build
 
+###############################################
 # Production stage
-FROM node:20-alpine AS production
+###############################################
+FROM node:20 AS production
 
 WORKDIR /app
+
+# Dependências de sistema necessárias para o Prisma em produção
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openssl ca-certificates wget && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copia apenas o necessário
 COPY --from=builder /app/node_modules ./node_modules

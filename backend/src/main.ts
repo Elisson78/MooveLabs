@@ -12,12 +12,18 @@ async function bootstrap() {
   // CORS
   app.enableCors({
     origin: [
-      'http://localhost:3000',  // Site Next.js
-      'http://localhost:3001',  // Site Docker
-      'http://localhost:3003',  // Dashboard
-      'https://moovelabs.com',
-      'https://app.moovelabs.com',
+      'http://localhost:3000',  // Dev Local (Site)
+      'http://localhost:3001',  // Dev Local (Outro)
+      'http://localhost:3002',  // Backend Local
+      'http://localhost:3003',  // Dashboard Local
+      'https://moovelabs.com',          // Site Produção
+      'https://www.moovelabs.com',      // Site WWW
+      'https://app.moovelabs.com',      // Dashboard Produção
+      'https://api.moovelabs.com',      // API Produção
+      'https://painel.moovelabs.com',   // Painel Genérico
+      'https://painel-n8n.moovelabs.com', // n8n
     ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
   
@@ -50,8 +56,9 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
   
   // Start server
-  const port = process.env.BACKEND_PORT || 3002;
-  await app.listen(port);
+  // Usar PORT padrão do serviço de hospedagem se disponível ou 3002
+  const port = process.env.PORT || process.env.BACKEND_PORT || 3002;
+  await app.listen(port, '0.0.0.0'); // Escutar em todas as interfaces
   
   console.log(`
 🚀 MooveLabs Backend running!
@@ -61,4 +68,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-
