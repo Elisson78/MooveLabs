@@ -1,0 +1,25 @@
+# Ignorar node_modules (serão instalados no build)
+node_modules
+**/node_modules
+
+# Ignorar backend e dashboard (têm seus próprios Dockerfiles)
+backend
+dashboard
+
+# Ignorar arquivos de desenvolvimento
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Ignorar docs e configs desnecessários
+*.md
+!README.md
+agents
+n8n
+*.log
+
+# Ignorar arquivos Next.js desnecessários
+.next
+out

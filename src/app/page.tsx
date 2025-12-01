@@ -64,13 +64,13 @@ const Navbar = () => {
           {/* Auth Buttons */}
           <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-white/20">
             <a 
-              href="http://localhost:3003/login" 
+              href="https://app.moovelabs.com/login" 
               className="text-gray-300 hover:text-white transition-colors font-medium"
             >
               Entrar
             </a>
             <a 
-              href="http://localhost:3003/register" 
+              href="https://app.moovelabs.com/register" 
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full transition-colors font-medium"
             >
               Criar Conta
@@ -99,13 +99,13 @@ const Navbar = () => {
             {/* Auth Buttons Mobile */}
             <div className="pt-4 mt-4 border-t border-white/10 flex flex-col space-y-3">
               <a 
-                href="http://localhost:3003/login" 
+                href="https://app.moovelabs.com/login" 
                 className="text-center py-2 text-gray-300 hover:text-white font-medium"
               >
                 Entrar
               </a>
               <a 
-                href="http://localhost:3003/register" 
+                href="https://app.moovelabs.com/register" 
                 className="text-center bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full font-medium"
               >
                 Criar Conta Grátis
