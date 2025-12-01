@@ -4,7 +4,10 @@
 // ============================================
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Força uso do engine compatível com Debian + OpenSSL 3.0 (Node 20)
+  // e mantém "native" para ambientes de desenvolvimento locais.
+  binaryTargets = ["debian-openssl-3.0.x", "native"]
 }
 
 datasource db {
