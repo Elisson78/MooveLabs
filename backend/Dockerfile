@@ -53,9 +53,13 @@ EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3002/api || exit 1
 
+##############################
 # Comando para iniciar
-# Atenção: assumimos que o banco já está migrado. Migrations devem ser aplicadas
-# manualmente (localmente ou via job separado) para evitar problemas de engine
-# do Prisma no ambiente de produção do EasyPanel.
-CMD ["node", "dist/main.js"]
+##############################
+# Observação:
+# - O Nest está configurado para compilar os arquivos dentro de "dist/src"
+#   (veja "dist/src/main.js"), por isso apontamos explicitamente para esse caminho.
+# - As migrations do Prisma NÃO são executadas automaticamente aqui. Elas devem
+#   ser aplicadas via job/CI separado (por exemplo, usando "prisma migrate deploy").
+CMD ["node", "dist/src/main.js"]
 
