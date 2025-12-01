@@ -3,6 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Argumento para API URL (usado no build do Vite)
+ARG VITE_API_URL=https://api.moovelabs.com/api
+ENV VITE_API_URL=$VITE_API_URL
+
 # Copia package files
 COPY package*.json ./
 
@@ -27,4 +31,3 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
-

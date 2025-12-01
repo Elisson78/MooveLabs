@@ -1,0 +1,46 @@
+version: '3.8'
+
+# Docker Compose para deploy no Portainer
+# Usa imagens do Docker Hub
+
+services:
+  moovelabs-backend:
+    image: elisson78/moovelabs-backend:latest
+    container_name: moovelabs-backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:Bradok41@postgres:5432/db_moovelabs?schema=public
+      - JWT_SECRET=moovelabs-jwt-secret-prod-2024-secure
+      - JWT_REFRESH_SECRET=moovelabs-refresh-secret-prod-2024-secure
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - N8N_API_URL=https://painel-n8n.moovelabs.com
+      - N8N_API_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNjMyNDI0MC01NzgwLTQyNjgtYThmZi0wNGQ4MWM2MjRjMTYiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwiaWF0IjoxNzYzNTc0OTg1LCJleHAiOjE3NjYxMjA0MDB9.BoBU_lXsWeRVjU7yMLEFmnbGk5dKTYvAKJfNoKerggs
+      - BACKEND_PORT=3002
+      - NODE_ENV=production
+    ports:
+      - "3002:3002"
+    networks:
+      - easypanel
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  moovelabs-dashboard:
+    image: elisson78/moovelabs-dashboard:latest
+    container_name: moovelabs-dashboard
+    ports:
+      - "3003:80"
+    networks:
+      - easypanel
+    restart: unless-stopped
+    depends_on:
+      - moovelabs-backend
+
+networks:
+  easypanel:
+    external: true
+
