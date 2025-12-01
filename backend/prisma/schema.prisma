@@ -1,0 +1,335 @@
+// ============================================
+// MooveLabs SaaS - Prisma Schema
+// Multi-tenant Architecture with tenant_id
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  OWNER   // Dono do tenant - pode tudo
+  ADMIN   // Admin - gerencia usuários e automações
+  MEMBER  // Membro - usa automações
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING // Aguardando confirmação de email
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+enum AutomationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+  PAUSED
+}
+
+enum ExecutionStatus {
+  RUNNING
+  SUCCESS
+  ERROR
+  CANCELED
+}
+
+// ============================================
+// TENANT (Empresa/Workspace)
+// ============================================
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String   // Nome da empresa
+  slug      String   @unique // URL-friendly: "minha-empresa"
+  email     String?  // Email principal do tenant
+  logo      String?  // URL do logo
+  
+  // Settings
+  settings  Json     @default("{}")
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  users                User[]
+  subscription         Subscription?
+  automationInstances  AutomationInstance[]
+  executions           AutomationExecution[]
+  apiKeys              ApiKey[]
+  
+  @@map("tenants")
+}
+
+// ============================================
+// USER (Usuário)
+// ============================================
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  password     String     // Hashed
+  name         String
+  avatar       String?
+  role         UserRole   @default(MEMBER)
+  status       UserStatus @default(PENDING)
+  
+  // Multi-tenant
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Auth
+  refreshToken String?    // Para refresh token rotation
+  lastLoginAt  DateTime?
+  
+  // Timestamps
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@index([tenantId])
+  @@index([email])
+  @@map("users")
+}
+
+// ============================================
+// PLAN (Plano de Assinatura)
+// ============================================
+
+model Plan {
+  id                    String   @id @default(cuid())
+  name                  String   // "Start", "Professional", "Business", "Enterprise"
+  slug                  String   @unique // "start", "professional", etc.
+  description           String?
+  
+  // Pricing
+  priceMonthly          Decimal  @db.Decimal(10, 2)
+  priceCurrency         String   @default("CHF")
+  
+  // Limits
+  maxWorkflows          Int      // Limite de workflows ativos
+  maxExecutionsPerMonth Int      // Limite de execuções/mês
+  maxUsers              Int      // Limite de usuários
+  
+  // Features (JSON para flexibilidade)
+  features              Json     @default("[]")
+  
+  // Status
+  isActive              Boolean  @default(true)
+  isPublic              Boolean  @default(true) // Visível para novos clientes
+  
+  // Timestamps
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  subscriptions         Subscription[]
+  
+  @@map("plans")
+}
+
+// ============================================
+// SUBSCRIPTION (Assinatura do Tenant)
+// ============================================
+
+model Subscription {
+  id                    String             @id @default(cuid())
+  
+  // Multi-tenant (1:1 com Tenant)
+  tenantId              String             @unique
+  tenant                Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Plan
+  planId                String
+  plan                  Plan               @relation(fields: [planId], references: [id])
+  
+  // Status
+  status                SubscriptionStatus @default(TRIALING)
+  
+  // Billing (preparado para Stripe)
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  
+  // Period
+  currentPeriodStart    DateTime           @default(now())
+  currentPeriodEnd      DateTime
+  trialEndsAt           DateTime?
+  canceledAt            DateTime?
+  
+  // Usage tracking (atualizado mensalmente)
+  executionsUsed        Int                @default(0)
+  
+  // Timestamps
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  
+  @@index([tenantId])
+  @@index([planId])
+  @@map("subscriptions")
+}
+
+// ============================================
+// AUTOMATION TEMPLATE (Templates base)
+// ============================================
+
+model AutomationTemplate {
+  id              String   @id @default(cuid())
+  name            String   // "Lead Capture WhatsApp"
+  slug            String   @unique
+  description     String?
+  
+  // Categoria
+  category        String   // "marketing", "sales", "support"
+  
+  // n8n workflow JSON
+  workflowJson    Json     // JSON do workflow do n8n
+  
+  // Config
+  requiredInputs  Json     @default("[]") // Campos que o tenant precisa preencher
+  icon            String?  // Ícone/emoji
+  
+  // Visibility
+  isActive        Boolean  @default(true)
+  isPublic        Boolean  @default(true)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  instances       AutomationInstance[]
+  
+  @@map("automation_templates")
+}
+
+// ============================================
+// AUTOMATION INSTANCE (Workflow do Tenant)
+// ============================================
+
+model AutomationInstance {
+  id               String           @id @default(cuid())
+  name             String           // Nome customizado pelo tenant
+  description      String?
+  
+  // Multi-tenant
+  tenantId         String
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Template base (opcional - pode ser custom)
+  templateId       String?
+  template         AutomationTemplate? @relation(fields: [templateId], references: [id])
+  
+  // n8n integration
+  n8nWorkflowId    String?          // ID do workflow no n8n
+  n8nWebhookUrl    String?          // URL do webhook (se houver)
+  
+  // Status
+  status           AutomationStatus @default(INACTIVE)
+  
+  // Config customizada do tenant
+  config           Json             @default("{}")
+  
+  // Stats
+  lastExecutedAt   DateTime?
+  executionCount   Int              @default(0)
+  errorCount       Int              @default(0)
+  
+  // Timestamps
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  
+  // Relations
+  executions       AutomationExecution[]
+  
+  @@index([tenantId])
+  @@index([status])
+  @@map("automation_instances")
+}
+
+// ============================================
+// AUTOMATION EXECUTION (Log de Execuções)
+// ============================================
+
+model AutomationExecution {
+  id                   String          @id @default(cuid())
+  
+  // Multi-tenant
+  tenantId             String
+  tenant               Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Automation
+  automationInstanceId String
+  automationInstance   AutomationInstance @relation(fields: [automationInstanceId], references: [id], onDelete: Cascade)
+  
+  // n8n execution
+  n8nExecutionId       String?         @unique // ID da execução no n8n
+  
+  // Status
+  status               ExecutionStatus @default(RUNNING)
+  
+  // Data
+  inputData            Json?           // Dados de entrada
+  outputData           Json?           // Dados de saída
+  errorMessage         String?         // Mensagem de erro (se houver)
+  
+  // Timing
+  startedAt            DateTime        @default(now())
+  finishedAt           DateTime?
+  durationMs           Int?            // Duração em millisegundos
+  
+  // Timestamps
+  createdAt            DateTime        @default(now())
+  
+  @@index([tenantId])
+  @@index([automationInstanceId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("automation_executions")
+}
+
+// ============================================
+// API KEY (Chaves de API do Tenant)
+// ============================================
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  name        String    // "Production Key", "Test Key"
+  key         String    @unique // Chave hasheada
+  keyPreview  String    // Últimos 4 caracteres para display
+  
+  // Multi-tenant
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  // Permissions
+  scopes      String[]  @default(["read", "execute"]) // read, write, execute, admin
+  
+  // Status
+  isActive    Boolean   @default(true)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([tenantId])
+  @@index([key])
+  @@map("api_keys")
+}
+

@@ -1,9 +1,119 @@
+# ============================================
+# MooveLabs SaaS - Docker Compose
+# ============================================
+
 services:
+  # ============================================
+  # SITE (Next.js)
+  # ============================================
   moovelabs-site:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: moovelabs-site
     environment:
       - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://moovelabs-backend:3002
+      - NEXT_PUBLIC_DASHBOARD_URL=http://localhost:3003
     ports:
       - "3001:3000"
+    depends_on:
+      - moovelabs-backend
+    restart: unless-stopped
+
+  # ============================================
+  # BACKEND (NestJS)
+  # ============================================
+  moovelabs-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: moovelabs-backend
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:Bradok41@postgres:5432/db_moovelabs?schema=public
+      - JWT_SECRET=${JWT_SECRET:-moovelabs-jwt-secret-change-in-production-2024}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-moovelabs-refresh-secret-change-in-production-2024}
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - BACKEND_PORT=3002
+      - N8N_HOST=http://n8n:5678
+      - N8N_API_KEY=${N8N_API_KEY:-}
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # ============================================
+  # DASHBOARD (React Vite) - Build em dev
+  # ============================================
+  moovelabs-dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: moovelabs-dashboard
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://moovelabs-backend:3002
+    ports:
+      - "3003:80"
+    depends_on:
+      - moovelabs-backend
+    restart: unless-stopped
+
+  # ============================================
+  # DATABASE (PostgreSQL)
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: moovelabs-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Bradok41
+      - POSTGRES_DB=db_moovelabs
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # N8N (Motor de Automações) - Opcional
+  # Descomente quando for configurar
+  # ============================================
+  # n8n:
+  #   image: n8nio/n8n:latest
+  #   container_name: moovelabs-n8n
+  #   environment:
+  #     - N8N_BASIC_AUTH_ACTIVE=true
+  #     - N8N_BASIC_AUTH_USER=admin
+  #     - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-n8n_admin_password}
+  #     - N8N_HOST=n8n
+  #     - N8N_PORT=5678
+  #     - N8N_PROTOCOL=http
+  #     - WEBHOOK_URL=http://n8n:5678/
+  #     - GENERIC_TIMEZONE=America/Sao_Paulo
+  #     - DB_TYPE=postgresdb
+  #     - DB_POSTGRESDB_HOST=postgres
+  #     - DB_POSTGRESDB_PORT=5432
+  #     - DB_POSTGRESDB_DATABASE=n8n
+  #     - DB_POSTGRESDB_USER=postgres
+  #     - DB_POSTGRESDB_PASSWORD=Bradok41
+  #   ports:
+  #     - "5678:5678"
+  #   volumes:
+  #     - n8n_data:/home/node/.n8n
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+  # n8n_data:
