@@ -13,13 +13,21 @@ dashboard
 .env.*
 !.env.example
 
-# Ignorar docs e configs desnecessários
+# Ignorar docs e configs desnecessários (mas manter next.config.ts)
 *.md
 !README.md
 agents
 n8n
 *.log
 
-# Ignorar arquivos Next.js desnecessários
+# Ignorar arquivos Next.js de build local (serão gerados no Docker)
 .next
 out
+
+# Ignorar arquivos de CI/CD
+.github
+
+# Ignorar outros arquivos desnecessários
+docker-compose*.yml
+Dockerfile
+.dockerignore
