@@ -359,8 +359,15 @@ const Footer = () => (
           <a href="#" className="text-gray-400 hover:text-white transition-colors">Twitter</a>
         </div>
       </div>
-      <div className="mt-8 pt-8 border-t border-white/5 text-center text-gray-500 text-sm">
-        © {new Date().getFullYear()} MooveLabs. Todos os direitos reservados.
+      <div className="mt-8 pt-8 border-t border-white/5">
+        <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-6 text-gray-400 text-sm">
+          <a href="/politica-privacidade" className="hover:text-white transition-colors">Política de Privacidade</a>
+          <span className="hidden md:inline">•</span>
+          <a href="/termos-uso" className="hover:text-white transition-colors">Termos de Uso</a>
+        </div>
+        <div className="mt-4 text-center text-gray-500 text-sm">
+          © {new Date().getFullYear()} MooveLabs. Todos os direitos reservados.
+        </div>
       </div>
     </div>
   </footer>
