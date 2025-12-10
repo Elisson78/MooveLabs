@@ -1,0 +1,85 @@
+# ============================================
+# Easypanel Configuration for MooveLabs
+# ============================================
+# Este arquivo pode ser usado como referência
+# para configurar os serviços no Easypanel
+
+services:
+  # ============================================
+  # SITE (Next.js)
+  # ============================================
+  moovelabs-site:
+    type: docker
+    image: ${DOCKER_USERNAME}/moovelabs-site:latest
+    # Ou use build do GitHub:
+    # build:
+    #   context: https://github.com/Elisson78/MooveLabs.git
+    #   dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${API_URL}
+      - NEXT_PUBLIC_DASHBOARD_URL=${DASHBOARD_URL}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # BACKEND (NestJS)
+  # ============================================
+  moovelabs-backend:
+    type: docker
+    image: ${DOCKER_USERNAME}/moovelabs-backend:latest
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - BACKEND_PORT=3002
+      - N8N_HOST=${N8N_HOST}
+      - N8N_API_KEY=${N8N_API_KEY}
+    restart: unless-stopped
+    depends_on:
+      - postgres
+
+  # ============================================
+  # DASHBOARD (React Vite)
+  # ============================================
+  moovelabs-dashboard:
+    type: docker
+    image: ${DOCKER_USERNAME}/moovelabs-dashboard:latest
+    ports:
+      - "3003:80"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=${API_URL}
+    restart: unless-stopped
+    depends_on:
+      - moovelabs-backend
+
+  # ============================================
+  # DATABASE (PostgreSQL)
+  # ============================================
+  postgres:
+    type: postgres
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-db_moovelabs}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

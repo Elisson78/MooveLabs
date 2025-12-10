@@ -7,10 +7,38 @@ on:
 
 env:
   REGISTRY: docker.io
+  SITE_IMAGE: ${{ secrets.DOCKER_USERNAME }}/moovelabs-site
   BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/moovelabs-backend
   DASHBOARD_IMAGE: ${{ secrets.DOCKER_USERNAME }}/moovelabs-dashboard
 
 jobs:
+  build-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push Site
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.SITE_IMAGE }}:latest
+            ${{ env.SITE_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   build-backend:
     runs-on: ubuntu-latest
     steps:
@@ -66,5 +94,12 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             VITE_API_URL=https://api.moovelabs.com/api
+
+
+
+
+
+
+
 
 
