@@ -1,20 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { use } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Shield, Lock, Eye, FileText, Mail } from 'lucide-react';
 import Link from 'next/link';
 
-export default function PoliticaPrivacidade() {
+export default function PoliticaPrivacidade({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params);
+
   return (
     <main className="bg-black min-h-screen text-white">
       <div className="container mx-auto px-6 py-24 max-w-4xl">
-        <Link 
-          href="/"
+        <Link
+          href={`/${locale}`}
           className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft size={20} />
-          Voltar para a página inicial
+          {locale === 'pt' ? 'Voltar para a página inicial' : 'Retour à la page d\'accueil'}
         </Link>
 
         <motion.div
@@ -28,7 +30,7 @@ export default function PoliticaPrivacidade() {
           </div>
 
           <p className="text-gray-400 mb-8 text-lg">
-            Última atualização: {new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            Última atualização: {new Date().toLocaleDateString(locale === 'pt' ? 'pt-BR' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
 
           <div className="space-y-8 text-gray-300 leading-relaxed">
@@ -135,7 +137,7 @@ export default function PoliticaPrivacidade() {
             <section className="glass-card p-6">
               <h2 className="text-2xl font-bold text-white mb-4">9. Transferências Internacionais</h2>
               <p>
-                Suas informações podem ser transferidas e processadas em países diferentes do seu país de residência. Garantimos que essas transferências sejam realizadas em conformidade com as leis de proteção de dados aplicáveis.
+                Suas informações podem be transferidas e processadas em países diferentes do seu país de residência. Garantimos que essas transferências sejam realizadas em conformidade com as leis de proteção de dados aplicáveis.
               </p>
             </section>
 
@@ -175,11 +177,11 @@ export default function PoliticaPrivacidade() {
           </div>
 
           <div className="mt-12 pt-8 border-t border-white/10 text-center">
-            <Link 
-              href="/"
+            <Link
+              href={`/${locale}`}
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full transition-colors"
             >
-              Voltar para a página inicial
+              {locale === 'pt' ? 'Voltar para a página inicial' : 'Retour à la page d\'accueil'}
             </Link>
           </div>
         </motion.div>

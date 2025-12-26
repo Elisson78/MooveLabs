@@ -1,0 +1,133 @@
+{
+    "common": {
+        "getStarted": "Commencer Maintenant",
+        "viewProjects": "Voir les Projets",
+        "discoverAutomation": "Découvrir l'automatisation pour mon entreprise",
+        "login": "Connexion",
+        "register": "Créer un Compte",
+        "registerFree": "Créer un Compte Gratuit",
+        "contactSupport": "Demander un Devis",
+        "consult": "Sur demande",
+        "month": "mois",
+        "mostSold": "Plus populaire",
+        "setup": "Installation",
+        "monthly": "Mensuel",
+        "requestAnalysis": "Demander une analyse de projet",
+        "rightsReserved": "Tous droits réservés."
+    },
+    "navbar": {
+        "services": "Services",
+        "automations": "Automatisations",
+        "plans": "Tarifs",
+        "projects": "Projets",
+        "testimonials": "Témoignages"
+    },
+    "hero": {
+        "title1": "Innovation grâce à",
+        "title2": "l'Intelligence Artificielle",
+        "description": "Nous créons des applications, des automatisations et des agents de service 24h/24 qui transforment votre entreprise."
+    },
+    "services": {
+        "title": "Nos Solutions",
+        "subtitle": "Technologie de pointe pour booster vos résultats",
+        "appDev": {
+            "title": "Développement d'Apps",
+            "description": "Applications modernes et intuitives pour iOS et Android, construites avec les dernières technologies."
+        },
+        "aiAgents": {
+            "title": "Agents d'IA 24h/24",
+            "description": "Service client automatisé et intelligent qui ne dort jamais, augmentant vos ventes."
+        },
+        "automations": {
+            "title": "Automatisations",
+            "description": "Optimisez les processus répétitifs et gagnez du temps avec nos solutions d'automatisation d'entreprise."
+        }
+    },
+    "industries": {
+        "title": "Automatisations & Agents Exclusifs",
+        "description": "Boostez votre activité avec des flux intelligents créés sur n8n et des agents d'IA spécialisés.",
+        "tourism": {
+            "title": "Tourisme & Voyages",
+            "description": "Agents de voyages 24/7, itinéraires personnalisés automatiques et gestion de réservations intégrée à WhatsApp."
+        },
+        "legal": {
+            "title": "Juridique & Avocats",
+            "description": "Tri intelligent des clients, automatisation des contrats, gestion des délais et mises à jour procédurales."
+        },
+        "health": {
+            "title": "Esthétique & Santé",
+            "description": "Prise de rendez-vous automatique, rappels de séances, dossier numérique et fidélisation des patients."
+        },
+        "realEstate": {
+            "title": "Immobilier",
+            "description": "Qualification des prospects en temps réel, planification des visites et envoi automatique de biens compatibles."
+        },
+        "ecommerce": {
+            "title": "E-commerce & Vente",
+            "description": "Récupération de panier, suivi des commandes, traçabilité automatique et recommandations de produits par IA."
+        },
+        "custom": {
+            "title": "Votre Industrie",
+            "description": "Nous développons des flux n8n et des agents sur mesure adaptés à la réalité de votre entreprise, quelle qu'elle soit."
+        }
+    },
+    "plans": {
+        "title": "Plans d'Automatisation et IA MooveLabs",
+        "description": "Nous transformons les processus manuels en systèmes intelligents qui travaillent pour vous.",
+        "start": {
+            "name": "Start",
+            "subtitle": "Automatisation Essentielle",
+            "description": "Pour les petites entreprises qui débutent avec l'automatisation.",
+            "idealFor": "Entreprises voulant automatiser des tâches simples et réduire les coûts.",
+            "button": "Je commence"
+        },
+        "professional": {
+            "name": "Professional",
+            "subtitle": "Automatisation Intelligente",
+            "description": "Pour les entreprises qui veulent de réelles automatisations au quotidien.",
+            "idealFor": "Entreprises en croissance.",
+            "button": "Choisir Professional"
+        },
+        "business": {
+            "name": "Business",
+            "subtitle": "Automatisation Entreprise + IA",
+            "description": "Pour les entreprises qui dépendent des automatisations et veulent de la performance.",
+            "idealFor": "Entreprises voulant de l'échelle et réduire la main-d'œuvre.",
+            "button": "Choisir Business"
+        },
+        "enterprise": {
+            "name": "Enterprise",
+            "subtitle": "IA + CRM COMPLET PERSONNALISÉ",
+            "description": "C'est ici qu'intervient votre nouveau produit : un CRM développé sur mesure par MooveLabs.",
+            "idealFor": "Grandes entreprises ayant des besoins spécifiques.",
+            "button": "Demander une analyse de projet"
+        }
+    },
+    "crmHighlight": {
+        "badge": "Nouveau Produit Exclusif",
+        "title1": "CRM Personnalisé",
+        "title2": "MooveLabs",
+        "description": "Arrêtez d'adapter votre activité à des systèmes tout faits. Nous créons un CRM 100% personnalisé, à partir de zéro, fait spécialement pour votre entreprise.",
+        "features": [
+            "Fonctions basées sur votre flux réel",
+            "Automatisation via n8n",
+            "IA avancée intégrée",
+            "Tableaux de bord pour l'équipe",
+            "Modules illimités",
+            "Évolutif, sécurisé et rapide"
+        ]
+    },
+    "projects": {
+        "title": "Projets Récents",
+        "subtitle": "Découvrez certains de nos travaux et partenaires"
+    },
+    "testimonials": {
+        "title": "Ce que disent nos clients"
+    },
+    "footer": {
+        "tagline": "Transformer le futur avec l'IA.",
+        "address": "Rue de Lyon 106, Genève",
+        "privacy": "Politique de Confidentialité",
+        "terms": "Conditions d'Utilisation"
+    }
+}

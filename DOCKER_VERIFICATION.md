@@ -97,3 +97,5 @@ Antes de fazer deploy no Easypanel, confirme:
 - ✅ Não interfere com outros serviços
 
 Você pode fazer o deploy com confiança! 🚀
+
+

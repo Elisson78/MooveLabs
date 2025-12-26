@@ -1,12 +1,11 @@
 // ============================================
 // MooveLabs SaaS - Prisma Schema
-// Multi-tenant Architecture with tenant_id
+// Multi-tenant Architecture with tenantId
+// Migrado do Essentia + Estrutura MooveLabs
 // ============================================
 
 generator client {
   provider      = "prisma-client-js"
-  // Força uso do engine compatível com Debian + OpenSSL 3.0 (Node 20)
-  // e mantém "native" para ambientes de desenvolvimento locais.
   binaryTargets = ["debian-openssl-3.0.x", "native"]
 }
 
@@ -20,9 +19,9 @@ datasource db {
 // ============================================
 
 enum UserRole {
-  OWNER   // Dono do tenant - pode tudo
-  ADMIN   // Admin - gerencia usuários e automações
-  MEMBER  // Membro - usa automações
+  OWNER // Dono do tenant - pode tudo
+  ADMIN // Admin - gerencia usuários e automações
+  MEMBER // Membro - usa automações
 }
 
 enum UserStatus {
@@ -52,31 +51,94 @@ enum ExecutionStatus {
   CANCELED
 }
 
+// CRM Enums
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  NOTE
+  OTHER
+}
+
+enum ActivityStatus {
+  PENDING
+  COMPLETED
+  CANCELED
+}
+
+enum ActivityPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// Turismo Enums
+enum AgendamentoStatus {
+  PENDENTE
+  CONFIRMADO
+  CONCLUIDO
+  CANCELADO
+}
+
+enum GuiaStatus {
+  ATIVO
+  INATIVO
+  PENDENTE
+}
+
 // ============================================
 // TENANT (Empresa/Workspace)
 // ============================================
 
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String   // Nome da empresa
-  slug      String   @unique // URL-friendly: "minha-empresa"
-  email     String?  // Email principal do tenant
-  logo      String?  // URL do logo
-  
+  id          String  @id @default(cuid())
+  name        String // Nome da empresa
+  slug        String  @unique // URL-friendly: "minha-empresa"
+  email       String? // Email principal do tenant
+  logo        String? // URL do logo
+  description String? // Descrição da empresa
+
   // Settings
-  settings  Json     @default("{}")
-  
+  settings Json    @default("{}")
+  isActive Boolean @default(true)
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relations
-  users                User[]
-  subscription         Subscription?
-  automationInstances  AutomationInstance[]
-  executions           AutomationExecution[]
-  apiKeys              ApiKey[]
-  
+
+  // Relations - Core
+  users               User[]
+  subscription        Subscription?
+  automationInstances AutomationInstance[]
+  executions          AutomationExecution[]
+  apiKeys             ApiKey[]
+
+  // Relations - CRM
+  companies           Company[]
+  contacts            Contact[]
+  deals               Deal[]
+  pipelines           Pipeline[]
+  activities          Activity[]
+  notes               Note[]
+  tags                Tag[]
+  integrationWebhooks IntegrationWebhook[]
+  eventsLog           EventLog[]
+
+  // Relations - Turismo
+  passeios           Passeio[]
+  guias              Guia[]
+  agendamentos       Agendamento[]
+  clientes           Cliente[]
+  historicoMensagens HistoricoMensagem[]
+
   @@map("tenants")
 }
 
@@ -85,26 +147,26 @@ model Tenant {
 // ============================================
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  password     String     // Hashed
-  name         String
-  avatar       String?
-  role         UserRole   @default(MEMBER)
-  status       UserStatus @default(PENDING)
-  
+  id       String     @id @default(cuid())
+  email    String     @unique
+  password String // Hashed
+  name     String
+  avatar   String?
+  role     UserRole   @default(MEMBER)
+  status   UserStatus @default(PENDING)
+
   // Multi-tenant
-  tenantId     String
-  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Auth
-  refreshToken String?    // Para refresh token rotation
+  refreshToken String? // Para refresh token rotation
   lastLoginAt  DateTime?
-  
+
   // Timestamps
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([tenantId])
   @@index([email])
   @@map("users")
@@ -115,34 +177,34 @@ model User {
 // ============================================
 
 model Plan {
-  id                    String   @id @default(cuid())
-  name                  String   // "Start", "Professional", "Business", "Enterprise"
-  slug                  String   @unique // "start", "professional", etc.
-  description           String?
-  
+  id          String  @id @default(cuid())
+  name        String // "Start", "Professional", "Business", "Enterprise"
+  slug        String  @unique // "start", "professional", etc.
+  description String?
+
   // Pricing
-  priceMonthly          Decimal  @db.Decimal(10, 2)
-  priceCurrency         String   @default("CHF")
-  
+  priceMonthly  Decimal @db.Decimal(10, 2)
+  priceCurrency String  @default("CHF")
+
   // Limits
-  maxWorkflows          Int      // Limite de workflows ativos
-  maxExecutionsPerMonth Int      // Limite de execuções/mês
-  maxUsers              Int      // Limite de usuários
-  
+  maxWorkflows          Int // Limite de workflows ativos
+  maxExecutionsPerMonth Int // Limite de execuções/mês
+  maxUsers              Int // Limite de usuários
+
   // Features (JSON para flexibilidade)
-  features              Json     @default("[]")
-  
+  features Json @default("[]")
+
   // Status
-  isActive              Boolean  @default(true)
-  isPublic              Boolean  @default(true) // Visível para novos clientes
-  
+  isActive Boolean @default(true)
+  isPublic Boolean @default(true) // Visível para novos clientes
+
   // Timestamps
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  subscriptions         Subscription[]
-  
+  subscriptions Subscription[]
+
   @@map("plans")
 }
 
@@ -151,36 +213,36 @@ model Plan {
 // ============================================
 
 model Subscription {
-  id                    String             @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Multi-tenant (1:1 com Tenant)
-  tenantId              String             @unique
-  tenant                Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Plan
-  planId                String
-  plan                  Plan               @relation(fields: [planId], references: [id])
-  
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
   // Status
-  status                SubscriptionStatus @default(TRIALING)
-  
+  status SubscriptionStatus @default(TRIALING)
+
   // Billing (preparado para Stripe)
-  stripeCustomerId      String?
-  stripeSubscriptionId  String?
-  
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+
   // Period
-  currentPeriodStart    DateTime           @default(now())
-  currentPeriodEnd      DateTime
-  trialEndsAt           DateTime?
-  canceledAt            DateTime?
-  
+  currentPeriodStart DateTime  @default(now())
+  currentPeriodEnd   DateTime
+  trialEndsAt        DateTime?
+  canceledAt         DateTime?
+
   // Usage tracking (atualizado mensalmente)
-  executionsUsed        Int                @default(0)
-  
+  executionsUsed Int @default(0)
+
   // Timestamps
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([tenantId])
   @@index([planId])
   @@map("subscriptions")
@@ -191,32 +253,32 @@ model Subscription {
 // ============================================
 
 model AutomationTemplate {
-  id              String   @id @default(cuid())
-  name            String   // "Lead Capture WhatsApp"
-  slug            String   @unique
-  description     String?
-  
+  id          String  @id @default(cuid())
+  name        String // "Lead Capture WhatsApp"
+  slug        String  @unique
+  description String?
+
   // Categoria
-  category        String   // "marketing", "sales", "support"
-  
+  category String // "marketing", "sales", "support"
+
   // n8n workflow JSON
-  workflowJson    Json     // JSON do workflow do n8n
-  
+  workflowJson Json // JSON do workflow do n8n
+
   // Config
-  requiredInputs  Json     @default("[]") // Campos que o tenant precisa preencher
-  icon            String?  // Ícone/emoji
-  
+  requiredInputs Json    @default("[]") // Campos que o tenant precisa preencher
+  icon           String? // Ícone/emoji
+
   // Visibility
-  isActive        Boolean  @default(true)
-  isPublic        Boolean  @default(true)
-  
+  isActive Boolean @default(true)
+  isPublic Boolean @default(true)
+
   // Timestamps
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  instances       AutomationInstance[]
-  
+  instances AutomationInstance[]
+
   @@map("automation_templates")
 }
 
@@ -225,40 +287,40 @@ model AutomationTemplate {
 // ============================================
 
 model AutomationInstance {
-  id               String           @id @default(cuid())
-  name             String           // Nome customizado pelo tenant
-  description      String?
-  
+  id          String  @id @default(cuid())
+  name        String // Nome customizado pelo tenant
+  description String?
+
   // Multi-tenant
-  tenantId         String
-  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Template base (opcional - pode ser custom)
-  templateId       String?
-  template         AutomationTemplate? @relation(fields: [templateId], references: [id])
-  
+  templateId String?
+  template   AutomationTemplate? @relation(fields: [templateId], references: [id])
+
   // n8n integration
-  n8nWorkflowId    String?          // ID do workflow no n8n
-  n8nWebhookUrl    String?          // URL do webhook (se houver)
-  
+  n8nWorkflowId String? // ID do workflow no n8n
+  n8nWebhookUrl String? // URL do webhook (se houver)
+
   // Status
-  status           AutomationStatus @default(INACTIVE)
-  
+  status AutomationStatus @default(INACTIVE)
+
   // Config customizada do tenant
-  config           Json             @default("{}")
-  
+  config Json @default("{}")
+
   // Stats
-  lastExecutedAt   DateTime?
-  executionCount   Int              @default(0)
-  errorCount       Int              @default(0)
-  
+  lastExecutedAt DateTime?
+  executionCount Int       @default(0)
+  errorCount     Int       @default(0)
+
   // Timestamps
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  executions       AutomationExecution[]
-  
+  executions AutomationExecution[]
+
   @@index([tenantId])
   @@index([status])
   @@map("automation_instances")
@@ -269,35 +331,35 @@ model AutomationInstance {
 // ============================================
 
 model AutomationExecution {
-  id                   String          @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Multi-tenant
-  tenantId             String
-  tenant               Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Automation
   automationInstanceId String
   automationInstance   AutomationInstance @relation(fields: [automationInstanceId], references: [id], onDelete: Cascade)
-  
+
   // n8n execution
-  n8nExecutionId       String?         @unique // ID da execução no n8n
-  
+  n8nExecutionId String? @unique // ID da execução no n8n
+
   // Status
-  status               ExecutionStatus @default(RUNNING)
-  
+  status ExecutionStatus @default(RUNNING)
+
   // Data
-  inputData            Json?           // Dados de entrada
-  outputData           Json?           // Dados de saída
-  errorMessage         String?         // Mensagem de erro (se houver)
-  
+  inputData    Json? // Dados de entrada
+  outputData   Json? // Dados de saída
+  errorMessage String? // Mensagem de erro (se houver)
+
   // Timing
-  startedAt            DateTime        @default(now())
-  finishedAt           DateTime?
-  durationMs           Int?            // Duração em millisegundos
-  
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  durationMs Int? // Duração em millisegundos
+
   // Timestamps
-  createdAt            DateTime        @default(now())
-  
+  createdAt DateTime @default(now())
+
   @@index([tenantId])
   @@index([automationInstanceId])
   @@index([status])
@@ -310,29 +372,664 @@ model AutomationExecution {
 // ============================================
 
 model ApiKey {
-  id          String    @id @default(cuid())
-  name        String    // "Production Key", "Test Key"
-  key         String    @unique // Chave hasheada
-  keyPreview  String    // Últimos 4 caracteres para display
-  
+  id         String @id @default(cuid())
+  name       String // "Production Key", "Test Key"
+  key        String @unique // Chave hasheada
+  keyPreview String // Últimos 4 caracteres para display
+
   // Multi-tenant
-  tenantId    String
-  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
   // Permissions
-  scopes      String[]  @default(["read", "execute"]) // read, write, execute, admin
-  
+  scopes String[] @default(["read", "execute"]) // read, write, execute, admin
+
   // Status
-  isActive    Boolean   @default(true)
-  lastUsedAt  DateTime?
-  expiresAt   DateTime?
-  
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+
   // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([tenantId])
   @@index([key])
   @@map("api_keys")
 }
 
+// ============================================
+// CRM - COMPANY (Empresas/Clientes B2B)
+// ============================================
+
+model Company {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Info
+  name        String
+  website     String?
+  industry    String? // Setor de atuação
+  size        String? // Porte: "1-10", "11-50", etc.
+  phone       String?
+  email       String?
+  address     Json? // { street, city, state, country, zip }
+  description String? @db.Text
+  logoUrl     String?
+
+  // Metadata
+  tags         Json @default("[]")
+  customFields Json @default("{}")
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  // Relations
+  contacts   Contact[]
+  deals      Deal[]
+  activities Activity[]
+  notes      Note[]
+
+  @@index([tenantId])
+  @@index([name])
+  @@map("companies")
+}
+
+// ============================================
+// CRM - CONTACT (Contatos)
+// ============================================
+
+model Contact {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Company (opcional)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  // Info
+  firstName  String
+  lastName   String?
+  fullName   String? // Computed ou preenchido
+  email      String?
+  phone      String?
+  mobile     String?
+  jobTitle   String?
+  department String?
+  address    Json?
+  birthday   DateTime? @db.Date
+  notes      String?   @db.Text
+
+  // CRM
+  status String? // "lead", "customer", "churned"
+  source String? // "website", "referral", "ads"
+
+  // Integração com Turismo
+  clienteId String? // Link para Cliente de turismo (legado)
+
+  // Metadata
+  tags         Json @default("[]")
+  customFields Json @default("{}")
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  // Relations
+  deals      Deal[]
+  activities Activity[]
+  notesList  Note[]     @relation("ContactNotes")
+
+  @@index([tenantId])
+  @@index([companyId])
+  @@index([email])
+  @@map("contacts")
+}
+
+// ============================================
+// CRM - PIPELINE (Funis de Vendas)
+// ============================================
+
+model Pipeline {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Info
+  name        String
+  description String? @db.Text
+  isDefault   Boolean @default(false)
+  position    Int     @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  stages PipelineStage[]
+  deals  Deal[]
+
+  @@index([tenantId])
+  @@map("pipelines")
+}
+
+// ============================================
+// CRM - PIPELINE STAGE (Etapas do Funil)
+// ============================================
+
+model PipelineStage {
+  id String @id @default(cuid())
+
+  // Pipeline
+  pipelineId String
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+
+  // Info
+  name        String
+  description String? @db.Text
+  position    Int     @default(0)
+  color       String? // Cor hex
+  probability Int? // Probabilidade de fechamento (0-100)
+
+  // Status flags
+  isClosed Boolean @default(false) // Etapa de fechamento
+  isWon    Boolean @default(false) // Etapa de ganho
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  deals Deal[]
+
+  @@index([pipelineId])
+  @@map("pipeline_stages")
+}
+
+// ============================================
+// CRM - DEAL (Negócios/Oportunidades)
+// ============================================
+
+model Deal {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Pipeline
+  pipelineId String
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id])
+
+  stageId String
+  stage   PipelineStage @relation(fields: [stageId], references: [id])
+
+  // Contact & Company
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  // Owner
+  ownerId String? // ID do usuário responsável
+
+  // Info
+  title       String
+  description String? @db.Text
+  value       Decimal @default(0) @db.Decimal(12, 2)
+  currency    String  @default("BRL")
+
+  // Dates
+  expectedCloseDate DateTime? @db.Date
+  actualCloseDate   DateTime? @db.Date
+
+  // Status
+  status      DealStatus @default(OPEN)
+  probability Int? // Override da etapa (0-100)
+  priority    String? // "low", "medium", "high"
+
+  // Metadata
+  tags         Json @default("[]")
+  customFields Json @default("{}")
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  // Relations
+  activities Activity[]
+  notes      Note[]     @relation("DealNotes")
+
+  @@index([tenantId])
+  @@index([pipelineId])
+  @@index([stageId])
+  @@index([contactId])
+  @@index([companyId])
+  @@index([status])
+  @@map("deals")
+}
+
+// ============================================
+// CRM - ACTIVITY (Atividades/Tarefas)
+// ============================================
+
+model Activity {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relacionamentos (pelo menos um deve ser preenchido)
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  dealId String?
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  // Owner
+  ownerId String? // ID do usuário responsável
+
+  // Info
+  type        ActivityType @default(TASK)
+  subject     String
+  description String?      @db.Text
+
+  // Scheduling
+  dueDate         DateTime?
+  completedAt     DateTime?
+  durationMinutes Int?
+
+  // Status
+  status   ActivityStatus   @default(PENDING)
+  priority ActivityPriority @default(MEDIUM)
+
+  // Metadata
+  metadata Json @default("{}")
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  // Relations
+  notes Note[] @relation("ActivityNotes")
+
+  @@index([tenantId])
+  @@index([contactId])
+  @@index([companyId])
+  @@index([dealId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("activities")
+}
+
+// ============================================
+// CRM - NOTE (Notas/Anotações)
+// ============================================
+
+model Note {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relacionamentos (pode estar ligada a múltiplas entidades)
+  contactId String?
+  contact   Contact? @relation("ContactNotes", fields: [contactId], references: [id], onDelete: SetNull)
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  dealId String?
+  deal   Deal?   @relation("DealNotes", fields: [dealId], references: [id], onDelete: SetNull)
+
+  activityId String?
+  activity   Activity? @relation("ActivityNotes", fields: [activityId], references: [id], onDelete: SetNull)
+
+  // Author
+  authorId String? // ID do usuário que criou
+
+  // Info
+  title     String?
+  content   String  @db.Text
+  isPrivate Boolean @default(false)
+
+  // Metadata
+  tags Json @default("[]")
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  @@index([tenantId])
+  @@index([contactId])
+  @@index([companyId])
+  @@index([dealId])
+  @@index([activityId])
+  @@map("notes")
+}
+
+// ============================================
+// CRM - TAG (Tags para categorização)
+// ============================================
+
+model Tag {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Info
+  name        String
+  color       String? // Cor hex
+  description String? @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("tags")
+}
+
+// ============================================
+// INTEGRATION - WEBHOOKS
+// ============================================
+
+model IntegrationWebhook {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Info
+  name        String
+  eventType   String // "contact.created", "deal.won", etc.
+  targetUrl   String
+  method      String  @default("POST")
+  headers     Json    @default("{}")
+  secretToken String?
+
+  // Status
+  isActive       Boolean @default(true)
+  retryCount     Int     @default(3)
+  timeoutSeconds Int     @default(30)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([eventType])
+  @@map("integration_webhooks")
+}
+
+// ============================================
+// EVENT LOG (Auditoria)
+// ============================================
+
+model EventLog {
+  id String @id @default(cuid())
+
+  // Multi-tenant (opcional - pode ter eventos globais)
+  tenantId String?
+  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Event info
+  eventType  String // "crm", "automation", "auth"
+  entityType String // "contact", "deal", "user"
+  entityId   String
+  action     String // "created", "updated", "deleted"
+
+  // Actor
+  userId String?
+
+  // Data
+  changes  Json? // { before, after }
+  metadata Json?
+
+  // Webhook tracking
+  webhookSent        Boolean   @default(false)
+  webhookAttempts    Int       @default(0)
+  webhookLastAttempt DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([entityType, entityId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("events_log")
+}
+
+// ============================================
+// TURISMO - PASSEIO (Tours)
+// ============================================
+
+model Passeio {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Info
+  nome      String
+  descricao String  @db.Text
+  preco     Decimal @db.Decimal(10, 2)
+  duracao   String // "2h", "4h", "1 dia"
+  categoria String // "aventura", "cultural", "gastronômico"
+
+  // Media & Details
+  imagens   Json @default("[]")
+  inclusoes Json @default("[]") // O que está incluso
+  idiomas   Json @default("[]") // Idiomas disponíveis
+
+  // Capacity
+  capacidadeMaxima Int @default(10)
+
+  // Status
+  ativo Boolean @default(true)
+
+  // Timestamps
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  // Relations
+  agendamentos Agendamento[]
+
+  @@index([tenantId])
+  @@index([categoria])
+  @@map("passeios")
+}
+
+// ============================================
+// TURISMO - GUIA (Guias Turísticos)
+// ============================================
+
+model Guia {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Info pessoal
+  nome      String
+  email     String
+  telefone  String?
+  cpf       String?
+  biografia String? @db.Text
+  foto      String?
+
+  // Skills
+  especialidades Json @default("[]")
+  idiomas        Json @default("[]")
+
+  // Stats
+  avaliacaoMedia     Decimal? @db.Decimal(3, 2) // 0.00 a 5.00
+  totalAvaliacoes    Int      @default(0)
+  passeiosRealizados Int      @default(0)
+
+  // Financeiro
+  comissaoTotal      Decimal @default(0) @db.Decimal(12, 2)
+  percentualComissao Decimal @default(20) @db.Decimal(5, 2) // Padrão 20%
+
+  // Status
+  status       GuiaStatus @default(PENDENTE)
+  dataRegistro DateTime   @default(now())
+
+  // Timestamps
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  // Relations
+  agendamentos Agendamento[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("guias")
+}
+
+// ============================================
+// TURISMO - CLIENTE (Clientes de Turismo)
+// ============================================
+
+model Cliente {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Info
+  nome     String?
+  email    String?
+  telefone String?
+  mensagem String? @db.Text
+
+  // Internal
+  assignee String? // Responsável pelo atendimento
+
+  // Legado NocoDB
+  ncOrder Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  agendamentos Agendamento[]
+
+  @@index([tenantId])
+  @@index([email])
+  @@map("clientes")
+}
+
+// ============================================
+// TURISMO - AGENDAMENTO (Reservas)
+// ============================================
+
+model Agendamento {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Relacionamentos
+  passeioId String
+  passeio   Passeio @relation(fields: [passeioId], references: [id])
+
+  clienteId String?
+  cliente   Cliente? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+
+  guiaId String?
+  guia   Guia?   @relation(fields: [guiaId], references: [id], onDelete: SetNull)
+
+  // Scheduling
+  dataPasseio   DateTime @db.Date
+  horarioInicio String? // "09:00"
+  horarioFim    String? // "12:00"
+
+  // Booking details
+  numeroPessoas      Int
+  valorTotal         Decimal  @db.Decimal(10, 2)
+  valorComissao      Decimal? @db.Decimal(10, 2)
+  percentualComissao Decimal? @db.Decimal(5, 2)
+
+  // Status
+  status             AgendamentoStatus @default(PENDENTE)
+  observacoes        String?           @db.Text
+  motivoCancelamento String?           @db.Text
+
+  // Avaliação
+  avaliacaoCliente  Int? // 1-5 estrelas
+  comentarioCliente String? @db.Text
+
+  // Timestamps
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([passeioId])
+  @@index([clienteId])
+  @@index([guiaId])
+  @@index([dataPasseio])
+  @@index([status])
+  @@map("agendamentos")
+}
+
+// ============================================
+// CHAT - HISTÓRICO DE MENSAGENS
+// ============================================
+
+model HistoricoMensagem {
+  id String @id @default(cuid())
+
+  // Multi-tenant
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Session
+  sessionId String
+
+  // Content
+  title    String?
+  mensagem String? @db.Text
+  message  Json? // Formato estruturado { role, content, timestamp }
+
+  // Legado NocoDB
+  ncOrder Int?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([sessionId])
+  @@map("historico_mensagens")
+}

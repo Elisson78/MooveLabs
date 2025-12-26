@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+// URL base da API (sem /api no final - é adicionado automaticamente)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 interface RequestConfig {
   method?: string;
@@ -10,7 +11,8 @@ class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+    // Remove trailing slash e /api se existir
+    this.baseUrl = baseUrl.replace(/\/+$/, '').replace(/\/api$/, '');
   }
 
   private getAuthToken(): string | null {

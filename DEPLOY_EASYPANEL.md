@@ -147,3 +147,6 @@ Após o deploy, verifique:
 - [Documentação Easypanel](https://easypanel.io/docs)
 - [GitHub Actions Workflow](.github/workflows/docker-build.yml)
 - [Docker Compose](docker-compose.yml)
+
+
+

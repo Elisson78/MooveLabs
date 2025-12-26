@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { SkipTenantCheck } from '../../common/decorators';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -12,12 +13,14 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
+  @SkipTenantCheck()
   @ApiOperation({ summary: 'Registrar novo usuário e empresa' })
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('login')
+  @SkipTenantCheck()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login de usuário' })
   async login(@Body() dto: LoginDto) {
@@ -25,6 +28,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @SkipTenantCheck()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Renovar access token' })
   async refresh(@Body() dto: RefreshTokenDto) {

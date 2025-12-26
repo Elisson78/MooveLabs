@@ -187,3 +187,13 @@ No frontend React, criar pelo menos:
 3. **Antes de escrever o código, explique rapidamente o que vai fazer em cada arquivo/pasta, para eu entender e conseguir pedir ajustes.**
 
 
+
+
+
+
+
+
+
+
+
+
